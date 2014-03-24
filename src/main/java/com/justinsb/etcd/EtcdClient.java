@@ -1,5 +1,6 @@
 package com.justinsb.etcd;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -37,9 +38,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
-public class EtcdClient {
-    static final CloseableHttpAsyncClient httpClient = buildDefaultHttpClient();
-    static final Gson gson = new GsonBuilder().create();
+public class EtcdClient implements Closeable {
+    private final CloseableHttpAsyncClient httpClient;
+    private static final Gson gson = new GsonBuilder().create();
 
     static CloseableHttpAsyncClient buildDefaultHttpClient() {
         // TODO: Increase timeout??
@@ -52,6 +53,11 @@ public class EtcdClient {
     final URI baseUri;
 
     public EtcdClient(URI baseUri) {
+        this(buildDefaultHttpClient(), baseUri);
+    }
+
+    public EtcdClient(CloseableHttpAsyncClient httpClient, URI baseUri) {
+        this.httpClient = httpClient;
         String uri = baseUri.toString();
         if (!uri.endsWith("/")) {
             uri += "/";
@@ -475,4 +481,9 @@ public class EtcdClient {
         }
     }
 
+    @Override
+    public void close() throws IOException
+    {
+        httpClient.close();
+    }
 }
